@@ -13,6 +13,5 @@ func Home(c *gin.Context) {
 	c.JSON(http.StatusOK,gin.H{
 		"id": user.(models.User).ID,
 		"name": user.(models.User).Name,
-		"image": user.(models.User).Image,
 	})
 }

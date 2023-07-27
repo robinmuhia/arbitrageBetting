@@ -4,10 +4,9 @@ import "github.com/jinzhu/gorm"
 
 type User struct {
 	gorm.Model
-	Name string
-	Email string `gorm:"unique"`
-	Password string
-	Image string
-	bookmarkerRegion string
-	subscriptionPaid bool
+	Name string	`gorm:"not null;default:null"`
+	Email string `gorm:"unique;not null;type:varchar(100);default:null"`
+	Password string `gorm:"not null;default:null"`
+	BookmarkerRegion string
+	SubscriptionPaid bool
 }

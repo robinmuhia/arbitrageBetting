@@ -1,4 +1,4 @@
-package auth
+package controllers
 
 import (
 	"net/http"
@@ -14,17 +14,14 @@ import (
 
 func SignUp(c *gin.Context){
 	var body struct{
-		Email string
-		Password string
-		Name string
-		Image string
-		bookmarkerRegion string
-		subscriptionPaid bool
+		Email string `binding:"required"`
+		Password string `binding:"required"`
+		Name string `binding:"required"`
 	}
-	
+
 	if err := c.Bind(&body); err != nil{
 		c.JSON(http.StatusBadRequest,gin.H{
-			"error":"Failed to get all values from body",
+			"error":"Failed to get all values or incorrect data-types were sent",
 		})
 		return
 	}
@@ -41,7 +38,8 @@ func SignUp(c *gin.Context){
 		Name: body.Name,
 		Password: string(hashedPassword),
 		Email: body.Email,
-		Image: body.Image,
+		BookmarkerRegion: "uk",
+		SubscriptionPaid: true,
 	}
 
 	result := initializers.DB.Create(&user)
@@ -54,7 +52,6 @@ func SignUp(c *gin.Context){
 	c.JSON(http.StatusCreated,gin.H{
 		"id": user.ID,
 		"name": user.Name,
-		"image": user.Image,
 	})
 }
 
@@ -105,7 +102,6 @@ func Login(c *gin.Context){
 	c.JSON(http.StatusOK,gin.H{
 		"id": user.ID,
 		"name": user.Name,
-		"image": user.Image,
 	})
 }
 

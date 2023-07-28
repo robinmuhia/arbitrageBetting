@@ -1,8 +1,6 @@
 package models
 
 import (
-	"time"
-
 	"github.com/jinzhu/gorm"
 )
 
@@ -10,7 +8,6 @@ type ThreeOddsBet struct {
 	gorm.Model
 	Title string `gorm:"not null;default:null"`
 	Home string `gorm:"not null;default:null"`
-	Draw string `gorm:"not null;default:null"`
 	Away string `gorm:"not null;default:null"`
 	HomeOdds float64 `gorm:"not null;default:null"`
 	DrawOdds float64 `gorm:"not null;default:null"`
@@ -19,7 +16,7 @@ type ThreeOddsBet struct {
 	League string `gorm:"not null;default:null"`
 	Profit float64 `gorm:"not null;default:null"`
 	BookmarkerRegion string `gorm:"not null;default:null"`
-	GameTime time.Time `gorm:"not null;default:null"`
+	GameTime string `gorm:"not null;default:null"`
 }
 
 type TwoOddsBet struct {
@@ -33,7 +30,7 @@ type TwoOddsBet struct {
 	League string `gorm:"not null;default:null"`
 	Profit float64 `gorm:"not null;default:null"`
 	BookmarkerRegion string `gorm:"not null;default:null"`
-	GameTime time.Time `gorm:"not null;default:null"`
+	GameTime string `gorm:"not null;default:null"`
 }
 
 type Sport struct {
@@ -42,13 +39,12 @@ type Sport struct {
 	Title     	  string `json:"title"`
 	Description   string `json:"description"`
 	Active        bool   `json:"active"`
-	HasOutrights  string `json:"has_outrights"`
+	HasOutrights  bool `json:"has_outrights"`
 }
 
 type Outcome struct {
 	Name  string  `json:"name"`
 	Price float64 `json:"price"`
-	Point float64 `json:"point,omitempty"` // Some outcomes may have a point value, while others may not.
 }
 
 type Market struct {

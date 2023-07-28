@@ -8,6 +8,7 @@ type ThreeOddsBet struct {
 	gorm.Model
 	Title string `gorm:"not null;default:null"`
 	Home string `gorm:"not null;default:null"`
+	Draw string `gorm:"not null;default:null"`
 	Away string `gorm:"not null;default:null"`
 	HomeOdds float64 `gorm:"not null;default:null"`
 	DrawOdds float64 `gorm:"not null;default:null"`

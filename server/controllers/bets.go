@@ -89,14 +89,14 @@ func getOdds() ([]models.Odds,error) {
 					return
 				}
 
-				var odds models.Odds
+				var odds []models.Odds
 				if err := json.NewDecoder(response.Body).Decode(&odds); err != nil {
 					log.Printf("Failed to decode odds data for %s: %s\n", sport.Title, err)
 					return
 				}
 
 				mu.Lock()
-				allOdds = append(allOdds, odds)
+				allOdds = append(allOdds, odds...)
 				mu.Unlock()
 			}(sport)
 		}
@@ -128,8 +128,9 @@ func getArbs()([]models.ThreeOddsBet,[]models.TwoOddsBet,error){
 						if arb < float64(1) {
 							threewayArb := models.ThreeOddsBet{
 								Title: fmt.Sprintf("%s - %s",odd.HomeTeam,odd.AwayTeam) ,
-								Home: odd.HomeTeam,
-								Away: odd.AwayTeam,
+								Home: odd.Bookmakers[i].Title,
+								Away: odd.Bookmakers[j].Title,
+								Draw: odd.Bookmakers[k].Title,
 								HomeOdds: homeOdd,
 								AwayOdds: awayOdd,
 								DrawOdds: drawOdd,
@@ -149,8 +150,8 @@ func getArbs()([]models.ThreeOddsBet,[]models.TwoOddsBet,error){
 						if arb < float64(1) {
 							twowayArb := models.TwoOddsBet{
 								Title: fmt.Sprintf("%s - %s",odd.HomeTeam,odd.AwayTeam) ,
-								Home: odd.HomeTeam,
-								Away: odd.AwayTeam,
+								Home: odd.Bookmakers[i].Title,
+								Away: odd.Bookmakers[j].Title,
 								HomeOdds: homeOdd,
 								AwayOdds: awayOdd,
 								GameType: odd.SportKey,

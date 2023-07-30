@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"os"
 	"sync"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/robinmuhia/arbitrageBetting/server/arbitrageBackend/initializers"
@@ -41,10 +42,11 @@ func getSports() ([]models.Sport, error) {
 	return sports, nil
 }
 
-func getOdds() ([]models.Odds,error) {
+
+func getOdds() ([]models.Odds, error) {
 	apiKey := os.Getenv("ODDS_API_KEY")
 	if apiKey == "" {
-		return nil,errors.New("missing environment variable")
+		return nil, errors.New("missing environment variable")
 	}
 
 	region := "uk"
@@ -54,13 +56,14 @@ func getOdds() ([]models.Odds,error) {
 
 	sports, err := getSports()
 	if err != nil {
-		return nil,errors.New(err.Error())
+		return nil, errors.New(err.Error())
 	}
 	var wg sync.WaitGroup
 	var mu sync.Mutex
 	var allOdds []models.Odds
 
 	httpClient := &http.Client{}
+	ticker := time.NewTicker(1 * time.Second) // Set the wait duration to 1 second
 
 	for _, sport := range sports {
 		if sport.Active {
@@ -99,75 +102,124 @@ func getOdds() ([]models.Odds,error) {
 				allOdds = append(allOdds, odds...)
 				mu.Unlock()
 			}(sport)
+
+			// Wait for the specified duration before launching the next goroutine
+			<-ticker.C
 		}
 	}
 	wg.Wait()
-	return allOdds,nil
+	ticker.Stop() // Stop the ticker before returning
+
+	return allOdds, nil
 }
 
 
-func getArbs()([]models.ThreeOddsBet,[]models.TwoOddsBet,error){
-	odds,err := getOdds()
-
-	if err != nil{
-		return nil,nil,errors.New(err.Error())
+func getArbs() ([]models.ThreeOddsBet, []models.TwoOddsBet, error) {
+	odds, err := getOdds()
+	if err != nil {
+		return nil, nil, err
 	}
 
 	var ThreeOddsArbs []models.ThreeOddsBet
 	var TwoOddsArbs []models.TwoOddsBet
 
-	for _, odd := range odds{
-		for i := 0; i < len(odd.Bookmakers);i++{
-			for j := 0; j < len(odd.Bookmakers); j++{
-				if len(odd.Bookmakers[i].Markets[0].Outcomes) == 3 && odd.Bookmakers[i].Key == "h2h"{
-					for k := 0; k < len(odd.Bookmakers); k++{
-						homeOdd := odd.Bookmakers[i].Markets[0].Outcomes[0].Price
-						awayOdd := odd.Bookmakers[j].Markets[0].Outcomes[1].Price
-						drawOdd := odd.Bookmakers[k].Markets[0].Outcomes[2].Price
-						arb := ((1/homeOdd)+(1/awayOdd)+(1/drawOdd))
-						if arb < float64(1) {
-							threewayArb := models.ThreeOddsBet{
-								Title: fmt.Sprintf("%s - %s",odd.HomeTeam,odd.AwayTeam) ,
-								Home: odd.Bookmakers[i].Title,
-								Away: odd.Bookmakers[j].Title,
-								Draw: odd.Bookmakers[k].Title,
-								HomeOdds: homeOdd,
-								AwayOdds: awayOdd,
-								DrawOdds: drawOdd,
-								GameType: odd.SportKey,
-								League: odd.SportTitle,
-								BookmarkerRegion: "uk",
-								GameTime: odd.CommenceTime,								
-							}
-							ThreeOddsArbs = append(ThreeOddsArbs, threewayArb)
+	// Create channels to receive arbitrage results
+	threeOddsCh := make(chan models.ThreeOddsBet)
+	twoOddsCh := make(chan models.TwoOddsBet)
+
+	// Create a wait group to ensure all goroutines finish before returning
+	var wg sync.WaitGroup
+
+	for _, odd := range odds {
+		wg.Add(1)
+		go processOdd(odd, threeOddsCh, twoOddsCh, &wg)
+	}
+
+	// Close the channels once all goroutines finish processing
+	go func() {
+		wg.Wait()
+		close(threeOddsCh)
+		close(twoOddsCh)
+	}()
+
+	// Collect the results from channels
+	for arb := range threeOddsCh {
+		ThreeOddsArbs = append(ThreeOddsArbs, arb)
+	}
+	for arb := range twoOddsCh {
+		TwoOddsArbs = append(TwoOddsArbs, arb)
+	}
+
+	return ThreeOddsArbs, TwoOddsArbs, nil
+}
+
+
+func processOdd(odd models.Odds, threeOddsCh chan<- models.ThreeOddsBet, twoOddsCh chan<- models.TwoOddsBet, wg *sync.WaitGroup) {
+	defer wg.Done()
+
+	if len(odd.Bookmakers) < 2 {
+		return // Skip if there are not enough bookmakers for comparison
+	}
+
+	if len(odd.Bookmakers[0].Markets) == 0 || odd.Bookmakers[0].Markets[0].Key != "h2h" {
+		return // Skip if the market is not 'h2h'
+	}
+
+	if len(odd.Bookmakers[0].Markets[0].Outcomes) == 3 {
+		for i := 0; i < len(odd.Bookmakers)-2; i++ {
+			for j := i + 1; j < len(odd.Bookmakers)-1; j++ {
+				for k := j + 1; k < len(odd.Bookmakers); k++ {
+					homeOdd := odd.Bookmakers[i].Markets[0].Outcomes[0].Price
+					awayOdd := odd.Bookmakers[j].Markets[0].Outcomes[1].Price
+					drawOdd := odd.Bookmakers[k].Markets[0].Outcomes[2].Price
+					arb := (1 / homeOdd) + (1 / awayOdd) + (1 / drawOdd)
+					if arb < 1.0 {
+						profit := (1 - arb) * 100
+						threewayArb := models.ThreeOddsBet{
+							Title:            fmt.Sprintf("%s - %s", odd.HomeTeam, odd.AwayTeam),
+							Home:             odd.Bookmakers[i].Title,
+							Away:             odd.Bookmakers[j].Title,
+							Draw:             odd.Bookmakers[k].Title,
+							HomeOdds:         homeOdd,
+							AwayOdds:         awayOdd,
+							DrawOdds:         drawOdd,
+							GameType:         odd.SportKey,
+							League:           odd.SportTitle,
+							BookmarkerRegion: "uk",
+							Profit:           profit,
+							GameTime:         odd.CommenceTime,
 						}
-					}
-				} else if len(odd.Bookmakers[i].Markets[0].Outcomes) == 2 && odd.Bookmakers[i].Key == "h2h"{
-					for k := 0; k < len(odd.Bookmakers); k++{
-						homeOdd := odd.Bookmakers[i].Markets[0].Outcomes[0].Price
-						awayOdd := odd.Bookmakers[j].Markets[0].Outcomes[1].Price
-						arb := ((1/homeOdd)+(1/awayOdd))
-						if arb < float64(1) {
-							twowayArb := models.TwoOddsBet{
-								Title: fmt.Sprintf("%s - %s",odd.HomeTeam,odd.AwayTeam) ,
-								Home: odd.Bookmakers[i].Title,
-								Away: odd.Bookmakers[j].Title,
-								HomeOdds: homeOdd,
-								AwayOdds: awayOdd,
-								GameType: odd.SportKey,
-								League: odd.SportTitle,
-								BookmarkerRegion: "uk",
-								GameTime: odd.CommenceTime,								
-							}
-							TwoOddsArbs = append(TwoOddsArbs, twowayArb)							
-						}
+						threeOddsCh <- threewayArb
 					}
 				}
 			}
 		}
+	} else if len(odd.Bookmakers[0].Markets[0].Outcomes) == 2 {
+		for i := 0; i < len(odd.Bookmakers)-1; i++ {
+			for j := i + 1; j < len(odd.Bookmakers); j++ {
+				homeOdd := odd.Bookmakers[i].Markets[0].Outcomes[0].Price
+				awayOdd := odd.Bookmakers[j].Markets[0].Outcomes[1].Price
+				arb := (1 / homeOdd) + (1 / awayOdd)
+				if arb < 1.0 {
+					profit := (1 - arb) * 100
+					twowayArb := models.TwoOddsBet{
+						Title:            fmt.Sprintf("%s - %s", odd.HomeTeam, odd.AwayTeam),
+						Home:             odd.Bookmakers[i].Title,
+						Away:             odd.Bookmakers[j].Title,
+						HomeOdds:         homeOdd,
+						AwayOdds:         awayOdd,
+						GameType:         odd.SportKey,
+						League:           odd.SportTitle,
+						Profit:           profit,
+						BookmarkerRegion: "uk",
+						GameTime:         odd.CommenceTime,
+					}
+					twoOddsCh <- twowayArb
+				}
+			}
+		}
 	}
-	return ThreeOddsArbs,TwoOddsArbs,nil
-}
+} 
 	
 
 func LoadArbsInDB(c *gin.Context){

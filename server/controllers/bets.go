@@ -129,6 +129,7 @@ func getArbs() ([]models.ThreeOddsBet, []models.TwoOddsBet, error) {
 
 	// Create a wait group to ensure all goroutines finish before returning
 	var wg sync.WaitGroup
+	var once sync.Once
 
 	for _, odd := range odds {
 		wg.Add(1)
@@ -138,19 +139,36 @@ func getArbs() ([]models.ThreeOddsBet, []models.TwoOddsBet, error) {
 	// Close the channels once all goroutines finish processing
 	go func() {
 		wg.Wait()
-		close(threeOddsCh)
-		close(twoOddsCh)
+		once.Do(func() {
+			close(threeOddsCh)
+			close(twoOddsCh)
+		})
 	}()
 
 	// Collect the results from channels
-	for arb := range threeOddsCh {
-		ThreeOddsArbs = append(ThreeOddsArbs, arb)
-	}
-	for arb := range twoOddsCh {
-		TwoOddsArbs = append(TwoOddsArbs, arb)
-	}
+	for {
+        select {
+        case arb, ok := <-threeOddsCh:
+            if !ok {
+                threeOddsCh = nil // Set to nil to exit the loop when both channels are closed
+            } else {
+                ThreeOddsArbs = append(ThreeOddsArbs, arb)
+            }
+        case arb, ok := <-twoOddsCh:
+            if !ok {
+                twoOddsCh = nil // Set to nil to exit the loop when both channels are closed
+            } else {
+                TwoOddsArbs = append(TwoOddsArbs, arb)
+            }
+        }
+        // Exit the loop when both channels are closed
+        if threeOddsCh == nil && twoOddsCh == nil {
+            break
+        }
+    }
 
-	return ThreeOddsArbs, TwoOddsArbs, nil
+    return ThreeOddsArbs, TwoOddsArbs, nil
+
 }
 
 
@@ -225,33 +243,38 @@ func processOdd(odd models.Odds, threeOddsCh chan<- models.ThreeOddsBet, twoOdds
 } 
 	
 
-func LoadArbsInDB(c *gin.Context){
-	threeArbs, twoArbs, err := getArbs()
-	if err != nil{
-		c.JSON(http.StatusMethodNotAllowed,gin.H{})
-		return
-	}
-	if len(threeArbs) > 0{
-		initializers.DB.Migrator().DropTable(&models.ThreeOddsBet{})
-		initializers.DB.Migrator().CreateTable(&models.ThreeOddsBet{})
-		for _,arbs := range threeArbs{
-			initializers.DB.Create(&arbs)
+func LoadArbsInDB(){
+	ticker := time.NewTicker(time.Hour*24)
+	for ; ; <-ticker.C	{
+		threeArbs, twoArbs, err := getArbs()
+		if err != nil{
+			continue
 		}
-	}
-	if len(twoArbs) > 0{
-		initializers.DB.Migrator().DropTable(&models.TwoOddsBet{})
-		initializers.DB.Migrator().CreateTable(&models.TwoOddsBet{})
-		for _,arbs := range twoArbs{
-			initializers.DB.Create(&arbs)
+		if len(threeArbs) > 2{
+			initializers.DB.Migrator().DropTable(&models.ThreeOddsBet{})
+			initializers.DB.Migrator().CreateTable(&models.ThreeOddsBet{})
+			for _,arbs := range threeArbs{
+				initializers.DB.Create(&arbs)
+			}
 		}
+		if len(twoArbs) > 2{
+			initializers.DB.Migrator().DropTable(&models.TwoOddsBet{})
+			initializers.DB.Migrator().CreateTable(&models.TwoOddsBet{})
+			for _,arbs := range twoArbs{
+				initializers.DB.Create(&arbs)
+			}
+		}
+		log.Println("Arbs successfully added")
 	}	
-	c.JSON(http.StatusOK,gin.H{})
 }
 
-
-// func GetArbs(c *gin.Context){
-// 	_, err := getSports()
-// 	if err != nil{
-// 		return
-// 	}
-// }
+func GetArbs(c *gin.Context){
+	var threeArbs []models.ThreeOddsBet
+	initializers.DB.Order("profit desc").Find(&threeArbs)
+	var twoArbs []models.TwoOddsBet
+	initializers.DB.Order("profit desc").Find(&twoArbs)
+	c.JSON(http.StatusOK,gin.H{
+		"threeArbs":threeArbs,
+		"twoArbs": twoArbs,
+	})
+}

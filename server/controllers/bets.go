@@ -161,42 +161,15 @@ func processOdd(odd models.Odds, threeOddsCh chan<- models.ThreeOddsBet, twoOdds
 		return // Skip if there are not enough bookmakers for comparison
 	}
 
-	if len(odd.Bookmakers[0].Markets) == 0 || odd.Bookmakers[0].Markets[0].Key != "h2h" {
-		return // Skip if the market is not 'h2h'
-	}
-
-	if len(odd.Bookmakers[0].Markets[0].Outcomes) == 3 {
-		for i := 0; i < len(odd.Bookmakers)-2; i++ {
-			for j := i + 1; j < len(odd.Bookmakers)-1; j++ {
-				for k := j + 1; k < len(odd.Bookmakers); k++ {
-					homeOdd := odd.Bookmakers[i].Markets[0].Outcomes[0].Price
-					awayOdd := odd.Bookmakers[j].Markets[0].Outcomes[1].Price
-					drawOdd := odd.Bookmakers[k].Markets[0].Outcomes[2].Price
-					arb := (1 / homeOdd) + (1 / awayOdd) + (1 / drawOdd)
-					if arb < 1.0 {
-						profit := (1 - arb) * 100
-						threewayArb := models.ThreeOddsBet{
-							Title:            fmt.Sprintf("%s - %s", odd.HomeTeam, odd.AwayTeam),
-							Home:             odd.Bookmakers[i].Title,
-							Away:             odd.Bookmakers[j].Title,
-							Draw:             odd.Bookmakers[k].Title,
-							HomeOdds:         homeOdd,
-							AwayOdds:         awayOdd,
-							DrawOdds:         drawOdd,
-							GameType:         odd.SportKey,
-							League:           odd.SportTitle,
-							BookmarkerRegion: "uk",
-							Profit:           profit,
-							GameTime:         odd.CommenceTime,
-						}
-						threeOddsCh <- threewayArb
-					}
-				}
+	for i := 0; i < len(odd.Bookmakers); i++ {
+		if len(odd.Bookmakers[i].Markets) == 0 || odd.Bookmakers[i].Markets[0].Key != "h2h" {
+			return // Skip if the market is not 'h2h'
 			}
-		}
-	} else if len(odd.Bookmakers[0].Markets[0].Outcomes) == 2 {
-		for i := 0; i < len(odd.Bookmakers)-1; i++ {
-			for j := i + 1; j < len(odd.Bookmakers); j++ {
+		for j := 0; j < len(odd.Bookmakers); j++ {
+			if len(odd.Bookmakers[j].Markets) == 0 || odd.Bookmakers[j].Markets[0].Key != "h2h" {
+				return // Skip if the market is not 'h2h'
+				}
+			if len(odd.Bookmakers[i].Markets[0].Outcomes) == 2 && len(odd.Bookmakers[j].Markets[0].Outcomes) == 2 {
 				homeOdd := odd.Bookmakers[i].Markets[0].Outcomes[0].Price
 				awayOdd := odd.Bookmakers[j].Markets[0].Outcomes[1].Price
 				arb := (1 / homeOdd) + (1 / awayOdd)
@@ -213,8 +186,38 @@ func processOdd(odd models.Odds, threeOddsCh chan<- models.ThreeOddsBet, twoOdds
 						Profit:           profit,
 						BookmarkerRegion: "uk",
 						GameTime:         odd.CommenceTime,
+						}
+						twoOddsCh <- twowayArb
 					}
-					twoOddsCh <- twowayArb
+				} else if len(odd.Bookmakers[i].Markets[0].Outcomes) == 3 && len(odd.Bookmakers[j].Markets[0].Outcomes) == 3 {
+					for k := 0; k < len(odd.Bookmakers); k++ {
+						if len(odd.Bookmakers[k].Markets) == 0 || odd.Bookmakers[k].Markets[0].Key != "h2h" {
+							return // Skip if the market is not 'h2h'
+							}
+						if len(odd.Bookmakers[k].Markets[0].Outcomes) == 3 {
+							homeOdd := odd.Bookmakers[i].Markets[0].Outcomes[0].Price
+							awayOdd := odd.Bookmakers[j].Markets[0].Outcomes[1].Price
+							drawOdd := odd.Bookmakers[k].Markets[0].Outcomes[2].Price
+							arb := (1 / homeOdd) + (1 / awayOdd) + (1 / drawOdd)
+							if arb < 1.0 {
+								profit := (1 - arb) * 100
+								threewayArb := models.ThreeOddsBet {
+									Title:            fmt.Sprintf("%s - %s", odd.HomeTeam, odd.AwayTeam),
+									Home:             odd.Bookmakers[i].Title,
+									Away:             odd.Bookmakers[j].Title,
+									Draw:             odd.Bookmakers[k].Title,
+									HomeOdds:         homeOdd,
+									AwayOdds:         awayOdd,
+									DrawOdds:         drawOdd,
+									GameType:         odd.SportKey,
+									League:           odd.SportTitle,
+									BookmarkerRegion: "uk",
+									Profit:           profit,
+									GameTime:         odd.CommenceTime,
+								}
+								threeOddsCh <- threewayArb
+						}
+					}
 				}
 			}
 		}

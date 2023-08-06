@@ -3,9 +3,12 @@
 import { Box } from "@mui/material";
 import { useState } from "react";
 import FAQs from "@/components/FAQs";
+import SignUp from "@/components/Signup";
+import SignIn from "@/components/Signin";
 
 export default function Home() {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+  const [isSignUp, setIsSignUp] = useState<boolean>(true);
   return (
     <Box>
       {isLoggedIn ? (
@@ -20,7 +23,7 @@ export default function Home() {
               gridAutoFlow: "row",
               gridTemplateColumns: "repeat(2, 1fr)",
               gridTemplateRows: "repeat(1, 1fr)",
-              columnGap: "50px",
+              columnGap: "80px",
               justifyContent: "center",
               alignItems: "center",
             }}
@@ -28,7 +31,13 @@ export default function Home() {
             <Box>
               <FAQs />
             </Box>
-            <Box></Box>
+            <Box>
+              {isSignUp ? (
+                <SignUp setIsSignUp={setIsSignUp} />
+              ) : (
+                <SignIn setIsLoggedIn={setIsLoggedIn} />
+              )}
+            </Box>
           </Box>
         </Box>
       )}

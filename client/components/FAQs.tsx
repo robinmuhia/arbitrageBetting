@@ -107,7 +107,6 @@ const FAQs = () => {
         justifyContent: "center",
         alignItems: "center",
         boxSizing: "border-box",
-        width: "100%",
       }}
     >
       <Typography
@@ -137,11 +136,11 @@ const FAQs = () => {
                     const updatedFAQs = [...prevFAQs];
                     for (let i = 0; i < updatedFAQs.length; i++) {
                       if (i === index) {
-                        continue;
+                        updatedFAQs[i].open = !updatedFAQs[i].open;
+                      } else {
+                        updatedFAQs[i].open = false;
                       }
-                      updatedFAQs[i].open = false;
                     }
-                    updatedFAQs[index].open = !updatedFAQs[index].open;
                     return updatedFAQs;
                   })
                 }

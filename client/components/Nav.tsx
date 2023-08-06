@@ -4,11 +4,13 @@ import { useState } from "react";
 import { AppBar, Box, Toolbar, Typography, Button } from "@mui/material";
 
 const Nav = () => {
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(true);
 
   const handleClick = async () => {
     const url = process.env.NEXT_PUBLIC_BACKEND_URL;
-    const response = await fetch(`${url}/api/v1/bets`);
+    const response = await fetch(`${url}/api/v1/logout`, {
+      credentials: "include",
+    });
     console.log(url);
     if (response.ok) {
       setIsLoggedIn(false);
@@ -65,13 +67,7 @@ const Nav = () => {
                   </Button>
                 </Box>
               ) : (
-                <Box>
-                  <Button variant="contained">
-                    <Typography variant="h6" color="secondary" component="p">
-                      Sign In
-                    </Typography>
-                  </Button>
-                </Box>
+                <Box></Box>
               )}
             </Box>
           </Toolbar>

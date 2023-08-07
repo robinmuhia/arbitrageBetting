@@ -1,6 +1,6 @@
 # Client
 
-The client is made using NextJS with TypeScript. TailwindCSS is used. Material UI is the component library of choice. Next-Auth is used for authentication.
+The client is made using NextJS with TypeScript. Material UI is the component library of choice.
 
 # Server
 

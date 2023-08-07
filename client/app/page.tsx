@@ -5,14 +5,19 @@ import { useState } from "react";
 import FAQs from "@/components/FAQs";
 import SignUp from "@/components/Signup";
 import SignIn from "@/components/Signin";
+import ThreeArbs from "@/components/ThreeArbs";
+import TwoArbs from "@/components/TwoArbs";
 
 export default function Home() {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
-  const [isSignUp, setIsSignUp] = useState<boolean>(true);
+  const [isSignUp, setIsSignUp] = useState<boolean>(false);
   return (
     <Box>
       {isLoggedIn ? (
-        <></>
+        <Box sx={{ display: { xs: "none", lg: "block", xl: "none" } }}>
+          <ThreeArbs />
+          <TwoArbs />
+        </Box>
       ) : (
         <Box sx={{ display: { xs: "none", lg: "block", xl: "none" } }}>
           <Box

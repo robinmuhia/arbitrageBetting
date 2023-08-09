@@ -10,7 +10,7 @@ This is an arbitrage betting application that calculates arbitrage opportunities
 
 # Technologies
 
-The client is made using NextJS with TypeScript. Material UI is the component library of choice.
+The client is made using NextJS with TypeScript. Material UI is the component library of choice.\
 The server is made using Gin Gonic Framework. Gorm is the orm of choice for a PostGreSQL database
 
 # Setup
@@ -24,14 +24,15 @@ git clone https://github.com/robinmuhia/arbitrageBetting.git
 
 ## Client folder
 
-To run the client folder, install it locally using npm:
-Create an env file in the client folder and:
+Create an env file in the client folder:
 
 ```
 #for your backend port
 NEXT_PUBLIC_BACKEND_URL=http://localhost:8000
 
 ```
+
+To run the client folder, install it locally using npm:
 
 ```
 $ cd client
@@ -41,8 +42,7 @@ $ npm run dev
 
 ## Server folder
 
-To run the server folder, install it locally using go:
-Get an odds api key from [Sport Odds API](https://the-odds-api.com/)
+Get an odds api key from [Sport Odds API](https://the-odds-api.com/)\
 Create an env file in the client folder and:
 
 ```
@@ -52,6 +52,8 @@ JWT_SECRET={random long string with letters and numbers}
 ODDS_API_KEY={odds api key}
 
 ```
+
+To run the server folder, install it locally using go:
 
 ```
 $ cd server

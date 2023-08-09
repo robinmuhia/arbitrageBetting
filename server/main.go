@@ -34,7 +34,8 @@ func configureGin(wg *sync.WaitGroup){
 	r.POST("/api/v1/signup", controllers.SignUp)
 	r.POST("/api/v1/login",controllers.Login)
 	r.GET("/api/v1/logout",middleware.RequireAuth,controllers.Logout)
-	r.GET("/api/v1/bets",middleware.RequireAuth,controllers.GetArbs)
+	r.GET("/api/v1/twoarbsbets",middleware.RequireAuth,controllers.GetTwoArbs)
+	r.GET("/api/v1/threearbsbets",middleware.RequireAuth,controllers.GetThreeArbs)
 	r.Run() 
 	wg.Done()
 }

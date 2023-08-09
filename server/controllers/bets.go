@@ -268,13 +268,18 @@ func LoadArbsInDB(){
 	}	
 }
 
-func GetArbs(c *gin.Context){
-	var threeArbs []models.ThreeOddsBet
-	initializers.DB.Order("profit desc").Find(&threeArbs)
+func GetTwoArbs(c *gin.Context){
 	var twoArbs []models.TwoOddsBet
 	initializers.DB.Order("profit desc").Find(&twoArbs)
 	c.JSON(http.StatusOK,gin.H{
-		"threeArbs":threeArbs,
 		"twoArbs": twoArbs,
+	})
+}
+
+func GetThreeArbs(c *gin.Context){
+	var threeArbs []models.ThreeOddsBet
+	initializers.DB.Order("profit desc").Find(&threeArbs)
+	c.JSON(http.StatusOK,gin.H{
+		"threeArbs":threeArbs,
 	})
 }

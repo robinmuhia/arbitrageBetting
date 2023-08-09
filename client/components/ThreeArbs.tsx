@@ -2,6 +2,7 @@ import { Box, useTheme } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import Header from "./Header";
 import { useEffect, useState } from "react";
+import ThreeArbModal from "./ThreeArbModal";
 
 const ThreeArbs = () => {
   const [arbData, setArbData] = useState([]);
@@ -20,28 +21,28 @@ const ThreeArbs = () => {
       headerName: "Home Team",
       sortable: false,
       filterable: false,
-      flex: 0.7,
+      flex: 0.6,
     },
     {
       field: "Draw",
       headerName: "Draw Team",
       sortable: false,
       filterable: false,
-      flex: 0.7,
+      flex: 0.6,
     },
     {
       field: "Away",
       headerName: "Away Team",
       sortable: false,
       filterable: false,
-      flex: 0.7,
+      flex: 0.6,
     },
     {
       field: "HomeOdds",
       headerName: "Home odds",
       sortable: false,
       filterable: false,
-      flex: 0.2,
+      flex: 0.5,
       renderCell: (params: any) => `${Number(params.value).toFixed(2)}`,
     },
     {
@@ -49,7 +50,7 @@ const ThreeArbs = () => {
       headerName: "Draw odds",
       sortable: false,
       filterable: false,
-      flex: 0.2,
+      flex: 0.5,
       renderCell: (params: any) => `${Number(params.value).toFixed(2)}`,
     },
     {
@@ -57,23 +58,32 @@ const ThreeArbs = () => {
       headerName: "Away odds",
       sortable: false,
       filterable: false,
-      flex: 0.2,
+      flex: 0.5,
       renderCell: (params: any) => `${Number(params.value).toFixed(2)}`,
+    },
+    {
+      field: "GameType",
+      headerName: "Sport",
+      sortable: false,
+      filterable: false,
+      flex: 0.5,
+      renderCell: (params: any) =>
+        `${params.value.split("_")[0].toUpperCase()}`,
     },
     {
       field: "League",
       headerName: "League",
       sortable: false,
       filterable: false,
-      flex: 0.8,
+      flex: 0.5,
     },
     {
       field: "Profit",
-      headerName: "Projected Profit",
+      headerName: "Profit",
       sortable: false,
       filterable: false,
-      flex: 0.2,
-      renderCell: (params: any) => `${Number(params.value).toFixed(2)}`,
+      flex: 0.5,
+      renderCell: (params: any) => `${Number(params.value).toFixed(2)}%`,
     },
     {
       field: "GameTime",
@@ -81,14 +91,25 @@ const ThreeArbs = () => {
       flex: 0.8,
       filterable: false,
       renderCell: (params: any) =>
-        `${params.value.slice(11, 16)} ${params.value.slice(0, 10)}`,
+        `${params.value.slice(11, 16)} ${params.value.slice(
+          8,
+          10
+        )}/${params.value.slice(5, 7)}/${params.value.slice(0, 4)}`,
+    },
+    {
+      field: "",
+      headerName: "Calculate arbs",
+      sortable: false,
+      filterable: false,
+      flex: 0.8,
+      renderCell: (params: any) => <ThreeArbModal props={params.row} />,
     },
     {
       field: "BookmarkerRegion",
       headerName: "Bookmarkers Location",
       sortable: false,
       filterable: false,
-      flex: 0.2,
+      flex: 0.5,
       renderCell: (params: any) => `${params.value.toUpperCase()}`,
     },
   ];
@@ -97,7 +118,7 @@ const ThreeArbs = () => {
     const fetchArbs = async () => {
       try {
         const url = process.env.NEXT_PUBLIC_BACKEND_URL;
-        const res = await fetch(`${url}/api/v1/bets`, {
+        const res = await fetch(`${url}/api/v1/threearbsbets`, {
           method: "GET",
           credentials: "include",
         });
@@ -161,9 +182,8 @@ const ThreeArbs = () => {
           loading={isLoading || !arbData}
           //@ts-ignore
           getRowId={(row) => row.ID}
-          rows={(arbData && arbData) || []}
+          rows={arbData || []}
           columns={columns}
-          //   components={{ Toolbar: DataGridCustomToolbar }}
         />
       </Box>
     </Box>

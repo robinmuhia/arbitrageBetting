@@ -190,7 +190,7 @@ const ThreeArbModal = ({ props }: props) => {
             >
               <Box
                 sx={{
-                  width: "100%",
+                  width: "200px",
                   marginTop: "15px",
                   display: "inline-grid",
                   gridAutoFlow: "column",

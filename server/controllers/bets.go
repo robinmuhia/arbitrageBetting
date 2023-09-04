@@ -246,6 +246,7 @@ func processOdd(odd models.Odds, threeOddsCh chan<- models.ThreeOddsBet, twoOdds
 func LoadArbsInDB(){
 	ticker := time.NewTicker(time.Hour*24)
 	for ; ; <-ticker.C	{
+		log.Println("Starting to calculate arbs")
 		threeArbs, twoArbs, err := getArbs()
 		if err != nil{
 			continue

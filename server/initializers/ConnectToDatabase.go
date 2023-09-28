@@ -3,18 +3,26 @@ package initializers
 import (
 	"os"
 
-	"gorm.io/driver/postgres"
+	"github.com/robinmuhia/arbitrageBetting/server/arbitrageBackend/common"
 	"gorm.io/gorm"
 )
 
 var DB *gorm.DB
 
 func ConnectToDatabase(){
+	// Check if the environment variable for specifying the environment is set.
 	var err error
-	dsn := os.Getenv("DB_CONNECTION")
-	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	environment := os.Getenv("ENVIRONMENT")
 
-	if err != nil{
-		panic("failed to connect to postgre database")
+	if environment == "test" {
+		// If the environment is set to "test," use the test database.
+		DB, err = common.TestDBInit()
+	} else {
+		// For any other environment, use the production database.
+		DB, err = common.Init()
+	}
+
+	if err != nil {
+		panic("failed to connect to the database")
 	}
 }

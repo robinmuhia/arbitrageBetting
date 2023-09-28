@@ -44,5 +44,6 @@ func main() {
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go configureGin(&wg)
+	wg.Wait()
 	controllers.LoadArbsInDB()
 }

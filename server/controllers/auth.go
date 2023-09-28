@@ -73,7 +73,7 @@ func Login(c *gin.Context){
 	initializers.DB.First(&user,"email = ?",body.Email)
 	if user.ID == 0 {
 		c.JSON(http.StatusForbidden,gin.H{
-			"error":"Invalid email or passowrd",
+			"error":"Invalid email or password",
 		})
 		return
 	}

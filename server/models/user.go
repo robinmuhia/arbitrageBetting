@@ -2,6 +2,7 @@ package models
 
 import "github.com/jinzhu/gorm"
 
+// User object that represents current structure of our user
 type User struct {
 	gorm.Model
 	Name string	`gorm:"not null;default:null"`

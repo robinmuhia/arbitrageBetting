@@ -11,13 +11,14 @@ import (
 	"github.com/robinmuhia/arbitrageBetting/server/arbitrageBackend/middleware"
 )
 
-
+// Initialize required dependencies such as the database connection and environment variables
 func init(){
 	initializers.LoadEnvironmentVariables()
 	initializers.ConnectToDatabase()
 	initializers.SyncDatabase()
 }
 
+// Configures the gin instance such as routers
 func configureGin(wg *sync.WaitGroup){
 	r := gin.Default()
 	r.Use(cors.New(cors.Config{
@@ -40,6 +41,7 @@ func configureGin(wg *sync.WaitGroup){
 	wg.Done()
 }
 
+// Main function that runs the entire backend service
 func main() {
 	var wg sync.WaitGroup
 	wg.Add(1)

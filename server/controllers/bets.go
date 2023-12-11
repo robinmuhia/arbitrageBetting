@@ -16,6 +16,10 @@ import (
 	"github.com/robinmuhia/arbitrageBetting/server/arbitrageBackend/models"
 )
 
+// Url to query the odds external api
+const odds_url =  "https://api.the-odds-api.com/v4/sports"
+
+// Retrieves all available listed sports from the odds external api
 func getSports() ([]models.Sport, error) {
 	apiKey := os.Getenv("ODDS_API_KEY")
 	if apiKey == "" {
@@ -23,7 +27,7 @@ func getSports() ([]models.Sport, error) {
 	}
 	params := url.Values{}
 	params.Add("api_key", apiKey)
-	url := "https://api.the-odds-api.com/v4/sports?" + params.Encode()
+	url := odds_url + "?" + params.Encode()
 
 	response, err := http.Get(url)
 	if err != nil {
@@ -42,7 +46,7 @@ func getSports() ([]models.Sport, error) {
 	return sports, nil
 }
 
-
+// Retrieves all odds from using the getSports() function.
 func getOdds() ([]models.Odds, error) {
 	apiKey := os.Getenv("ODDS_API_KEY")
 	if apiKey == "" {
@@ -78,7 +82,7 @@ func getOdds() ([]models.Odds, error) {
 				params.Add("oddsFormat", oddsFormat)
 				params.Add("dateFormat", dateFormat)
 
-				url := fmt.Sprintf("https://api.the-odds-api.com/v4/sports/%s/odds?%s", sport.Key, params.Encode())
+				url := fmt.Sprintf("%s/%s/odds?%s", odds_url,sport.Key, params.Encode())
 
 				response, err := httpClient.Get(url)
 				if err != nil {
@@ -113,7 +117,7 @@ func getOdds() ([]models.Odds, error) {
 	return allOdds, nil
 }
 
-
+// calculates all the possible arbitrage betting opportunities from the getOdds() function.
 func getArbs() ([]models.ThreeOddsBet, []models.TwoOddsBet, error) {
 	odds, err := getOdds()
 	if err != nil {
@@ -171,7 +175,7 @@ func getArbs() ([]models.ThreeOddsBet, []models.TwoOddsBet, error) {
 
 }
 
-
+// This function calculates the actual arbitrage opportunities and sends arbs over channels
 func processOdd(odd models.Odds, threeOddsCh chan<- models.ThreeOddsBet, twoOddsCh chan<- models.TwoOddsBet, wg *sync.WaitGroup) {
 	defer wg.Done()
 
@@ -242,7 +246,7 @@ func processOdd(odd models.Odds, threeOddsCh chan<- models.ThreeOddsBet, twoOdds
 	}
 } 
 	
-
+// This function deletes all the arbs in the database and then inserts the most recent arbs into the database
 func LoadArbsInDB(){
 	ticker := time.NewTicker(time.Hour*24)
 	for ; ; <-ticker.C	{
@@ -269,6 +273,7 @@ func LoadArbsInDB(){
 	}	
 }
 
+// This function retreives all arbs from games with two possible outcomes i.e. home team wins or away team wins
 func GetTwoArbs(c *gin.Context){
 	var twoArbs []models.TwoOddsBet
 	initializers.DB.Order("profit desc").Find(&twoArbs)
@@ -277,6 +282,7 @@ func GetTwoArbs(c *gin.Context){
 	})
 }
 
+// This function retrieves all arbs from games with three possible outcomes i.e home team wins, away team wins or draw
 func GetThreeArbs(c *gin.Context){
 	var threeArbs []models.ThreeOddsBet
 	initializers.DB.Order("profit desc").Find(&threeArbs)

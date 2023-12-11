@@ -7,8 +7,10 @@ import (
 	"gorm.io/gorm"
 )
 
+// Gloabl variable that connects to the postgresql database
 var DB *gorm.DB
 
+// Connect to database depending on the environment i.e. either test or development.
 func ConnectToDatabase(){
 	// Check if the environment variable for specifying the environment is set.
 	var err error

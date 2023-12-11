@@ -12,6 +12,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+// Handles functionality for signing up. Requires email, password and name from the request body.
 func SignUp(c *gin.Context){
 	var body struct{
 		Email string `binding:"required"`
@@ -56,7 +57,7 @@ func SignUp(c *gin.Context){
 	})
 }
 
-
+// Handles login functionality. Requires email and password from the request body.
 func Login(c *gin.Context){
 	var body struct{
 		Email string
@@ -106,6 +107,7 @@ func Login(c *gin.Context){
 	})
 }
 
+// Handles the logout functionality.
 func Logout(c *gin.Context) {
     c.SetCookie("Authorization", "", -1, "", "", true, true)
 	c.JSON(http.StatusOK,gin.H{

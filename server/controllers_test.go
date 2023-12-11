@@ -20,13 +20,14 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-
+// Set up gin testing environment
 func setUpRouter() *gin.Engine{
     gin.SetMode(gin.TestMode)
     router := gin.Default()
     return router
 }
 
+// Test the current signup functionality.
 func TestSignUpUserExists(t *testing.T) {
     // Create a user with the same email in the database
     initializers.DB.Migrator().DropTable(&models.User{})
@@ -56,6 +57,7 @@ func TestSignUpUserExists(t *testing.T) {
     assert.Equal(t, http.StatusConflict, w.Code)
 }
 
+// Test incorrect sign up
 func TestSignUpIncorrectDataTypes(t *testing.T) {
     r := setUpRouter()
     r.POST("/api/v1/signup", controllers.SignUp)
@@ -70,6 +72,7 @@ func TestSignUpIncorrectDataTypes(t *testing.T) {
     assert.Equal(t, http.StatusBadRequest, w.Code)
 }
 
+// Test successful sign up
 func TestSuccessfulSignUp(t *testing.T) {
     initializers.DB.Migrator().DropTable(&models.User{})
     initializers.DB.Migrator().CreateTable(&models.User{})
@@ -90,6 +93,7 @@ func TestSuccessfulSignUp(t *testing.T) {
     assert.Equal(t, http.StatusOK, w.Code)
 }
 
+// Test successful login
 func TestLogin_Success(t *testing.T) {
     // Prepare a user with known credentials in the database
     initializers.DB.Migrator().DropTable(&models.User{})
@@ -122,6 +126,8 @@ func TestLogin_Success(t *testing.T) {
     assert.Contains(t, string(responseData), "name")
 }
 
+
+// Test incorrect login 
 func TestLogin_IncorrectCredentials(t *testing.T) {
     // Prepare an empty database
     initializers.DB.Migrator().DropTable(&models.User{})
@@ -158,6 +164,7 @@ func TestLogin_IncorrectCredentials(t *testing.T) {
     assert.Contains(t, string(responseData), "Invalid email or password")
 }
 
+// Test login with no user
 func TestLogin_NoUser(t *testing.T) {
     // Prepare an empty database
     initializers.DB.Migrator().DropTable(&models.User{})
@@ -182,6 +189,7 @@ func TestLogin_NoUser(t *testing.T) {
     assert.Contains(t, string(responseData), "Invalid email or password")
 }
 
+// Test logout functionality
 func TestLogout(t *testing.T){
     // Prepare a user with known credentials in the database
     initializers.DB.Migrator().DropTable(&models.User{})
@@ -229,6 +237,8 @@ func TestLogout(t *testing.T){
 
 }
 
+
+// Test retrieval of arbs with two odds
 func TestGetTwoArbs(t *testing.T) {
     r := setUpRouter()
 
@@ -338,6 +348,8 @@ twoArbs := []models.TwoOddsBet{
     assert.Len(t, response.TwoArbs, len(twoArbs))
 }
 
+
+// Test an unathorized request for arbs with two odds
 func TestGetUnauthorizedTwoArbs(t *testing.T) {
     r := setUpRouter()
 
@@ -436,6 +448,7 @@ twoArbs := []models.TwoOddsBet{
 }
 
 
+// Test retrieval of arbs with three odds
 func TestGetThreeArbs(t *testing.T) {
     r := setUpRouter()
 
@@ -515,6 +528,7 @@ threeArbs := []models.ThreeOddsBet{
 }
 
 
+// Test retrieval of arbs with three arbs 
 func TestUnaouthorizedGetThreeArbs(t *testing.T) {
     r := setUpRouter()
 

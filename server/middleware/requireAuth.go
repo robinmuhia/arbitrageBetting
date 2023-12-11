@@ -12,6 +12,7 @@ import (
 	"github.com/robinmuhia/arbitrageBetting/server/arbitrageBackend/models"
 )
 
+// function checks for a JWT token in the request body to ensure that the request is authenticated
 func RequireAuth(c *gin.Context){
 	jwtTokenString, err := c.Cookie("Authorization")
 	if err != nil{

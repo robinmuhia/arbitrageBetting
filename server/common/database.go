@@ -9,13 +9,15 @@ import (
 	"gorm.io/gorm"
 )
 
+// Database is a struct that embeds a *gorm.DB instance, representing a connection to a database.
 type Database struct {
 	*gorm.DB
 }
 
+// DB is a global variable that holds the main *gorm.DB instance for the application.
 var DB *gorm.DB
 
-// Opening a database and save the reference to `Database` struct.
+// Opens a database and save the reference to `Database` struct.
 func Init() (*gorm.DB, error) {
     dsn := os.Getenv("DB_CONNECTION")
     db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
